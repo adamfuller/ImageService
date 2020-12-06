@@ -3,7 +3,9 @@ part of app;
 class HomeView extends StatefulWidget {
   final bool isHome;
   final DateTime date;
-  HomeView({this.isHome=true, this.date});
+
+  HomeView({this.isHome = true, this.date});
+
   @override
   State<StatefulWidget> createState() {
     return _HomeViewState();
@@ -24,14 +26,10 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    String dateString = "";
-    if (widget.date != null){
-      dateString = " - " + DateFormat("d MMM y").format(widget.date);
-    }
     return Scaffold(
       key: vm.scaffoldKey,
       appBar: AppBar(
-        title: Text("Chores" + dateString),
+        title: Text("Photos"),
         backgroundColor: Colors.blueGrey,
       ),
       endDrawer: widget.isHome ? _getEndDrawer(context) : null,
@@ -40,23 +38,36 @@ class _HomeViewState extends State<HomeView> {
   }
 
   Widget _getBody() {
+    int crossAxisMax = MediaQuery.of(context).size.width~/128;
     return Center(
       child: SmartRefresher(
         enablePullDown: true,
         controller: vm.refreshController,
         header: WaterDropHeader(),
         onRefresh: vm.init,
-        child: ListView.builder(
-            itemCount: 10,
-            itemBuilder: (context, index) {
-              return RoundedCard(
-                child: ListTile(
-                  title: Text("Test"),
-                  subtitle: Text("Test"),
-                  trailing: Text("Test"),
+        child: GridView.builder(
+          gridDelegate:
+              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: crossAxisMax),
+          itemCount: 7,
+          itemBuilder: (context, index) {
+            return RoundedCard(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CachedNetworkImage(
+                  // width: MediaQuery.of(context).size.width / 5,
+                  // height: MediaQuery.of(context).size.height / 5,
+                  fit: BoxFit.cover,
+                  imageUrl:
+                      "https://icdn5.digitaltrends.com/image/digitaltrends/fromsmallton-768x768.jpg",
+                  progressIndicatorBuilder: (context, url, downloadProgress) =>
+                      CircularProgressIndicator(
+                          value: downloadProgress.progress),
+                  errorWidget: (context, url, error) => Icon(Icons.error),
                 ),
-              );
-            }),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -69,11 +80,13 @@ class _HomeViewState extends State<HomeView> {
       child: Center(
         child: ListView(
           children: [
-            Text("Hello", textAlign: TextAlign.center,),
+            Text(
+              "Hello",
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),
     );
   }
-
 }
