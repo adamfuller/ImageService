@@ -41,7 +41,7 @@ class _MainViewState extends State<MainView> {
     if (vm.isLoading) {
       return Loading();
     } else {
-      return HomeView(isHome:true);
+      return HomeView();
     }
   }
 }

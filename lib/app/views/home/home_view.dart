@@ -1,10 +1,9 @@
 part of app;
 
 class HomeView extends StatefulWidget {
-  final bool isHome;
   final DateTime date;
 
-  HomeView({this.isHome = true, this.date});
+  HomeView({this.date});
 
   @override
   State<StatefulWidget> createState() {
@@ -31,62 +30,66 @@ class _HomeViewState extends State<HomeView> {
       appBar: AppBar(
         title: Text("Photos"),
         backgroundColor: Colors.blueGrey,
+        actions: [
+          _getUploadButton(),
+        ],
       ),
-      endDrawer: widget.isHome ? _getEndDrawer(context) : null,
       body: vm.isLoading ? Loading() : _getBody(),
     );
   }
 
+  Widget _getUploadButton() {
+    if (vm.isUploadingImage) {
+      return Loading();
+    }
+    return IconButton(
+        icon: Icon(Icons.cloud_upload_rounded),
+        onPressed: () => vm.uploadPressed(context));
+  }
+
   Widget _getBody() {
-    int crossAxisMax = MediaQuery.of(context).size.width~/128;
+    if (vm.user == null || vm.user.imageCount == 0 || vm.images.length == 0) {
+      return Center(child: Text("No Images"));
+    }
     return Center(
       child: SmartRefresher(
         enablePullDown: true,
         controller: vm.refreshController,
         header: WaterDropHeader(),
-        onRefresh: vm.init,
-        child: GridView.builder(
-          gridDelegate:
-              SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: crossAxisMax),
-          itemCount: 7,
-          itemBuilder: (context, index) {
-            return RoundedCard(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  // width: MediaQuery.of(context).size.width / 5,
-                  // height: MediaQuery.of(context).size.height / 5,
-                  fit: BoxFit.cover,
-                  imageUrl:
-                      "https://icdn5.digitaltrends.com/image/digitaltrends/fromsmallton-768x768.jpg",
-                  progressIndicatorBuilder: (context, url, downloadProgress) =>
-                      CircularProgressIndicator(
-                          value: downloadProgress.progress),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                ),
-              ),
-            );
-          },
+        onRefresh: vm.getImages,
+        child: _getImagesGrid(),
+      ),
+    );
+  }
+
+  Widget _getImagesGrid() {
+    int crossAxisMax = MediaQuery.of(context).size.width ~/ 96;
+
+    return GridView.builder(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisMax,
+      ),
+      itemCount: vm.user.imageIds.length,
+      itemBuilder: (context, index) {
+        return index >= vm.images.length
+            ? RoundedCard(
+                child: Loading(),
+              )
+            : _getImageCard(vm.images[index]);
+      },
+    );
+  }
+
+  Widget _getImageCard(ImageModel image){
+    return RoundedCard(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.memory(
+          image.data,
+          fit: BoxFit.cover,
         ),
       ),
     );
   }
 
-  Widget _getEndDrawer(context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 3 / 4,
-      height: MediaQuery.of(context).size.height,
-      color: Colors.white60,
-      child: Center(
-        child: ListView(
-          children: [
-            Text(
-              "Hello",
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -1,58 +1,62 @@
 part of database;
 
 class ImageModel {
-  static const int _NAME_INDEX = 0;
-  static const int _OWNER_INDEX = 1;
-  static const int _DONE_INDEX = 2;
-  static const int _INDEX_INDEX = 3;
-  static const int _ID_INDEX = 4;
+  static const int _ID_LENGTH = 30;
 
-  String name, owner, id;
-  bool done;
-  int index;
+  String owner, id;
+  DateTime uploadDate;
+  Uint8List data;
 
-  ImageModel({this.name, this.owner, this.done, this.id, this.index = 0});
 
-  // static ImageModel fromDefinition(ChoreDefinition definition) {
-  //   int daysSince = definition.startDate.difference(DateTime.now()).inDays;
-  //   String owner = definition.owners[daysSince % definition.owners.length];
-  //   return ImageModel(
-  //     name: definition.name,
-  //     owner: owner,
-  //     done: false,
-  //     id: definition.id,
-  //     index: definition.index ?? 0,
-  //   );
-  // }
+  ImageModel({
+    this.id,
+    this.owner,
+    this.data,
+    this.uploadDate,
+  }){
+    this.id ??= getRandomString(_ID_LENGTH);
+  }
+
+  static Future<ImageModel> fromFile(File file) async {
+    return file?.readAsBytes()?.then<ImageModel>((bytes){
+      String userId = UserService.currentUserId;
+      return ImageModel(
+        owner:userId,
+        data: bytes,
+        uploadDate: DateTime.now(),
+      );
+    });
+  }
 
   Map<String, dynamic> toJson() {
     return {
-      "name": this.name,
       "owner": this.owner,
       "id": this.id,
-      "done": this.done,
-      "index": this.index,
+      "data": this.data.toList(),
+      "uploadDate": this.uploadDate.toIso8601String(),
     };
   }
 
   static ImageModel fromJson(Map<String, dynamic> map) {
+    Uint8List data = Uint8List.fromList((map["data"] as List<dynamic>)?.cast<int>());
     return ImageModel(
-      name: map["name"] as String,
       owner: map["owner"] as String,
-      done: map["done"] as bool ?? false,
       id: map["id"] as String,
-      index: map["index"] as int,
+      data: data,
+      uploadDate: DateTime.parse(map["uploadDate"]),
     );
   }
 
   static ImageModel fromString(String input) {
+    if (input == null || input.length == 0){
+      return null;
+    }
     Map map = Map.castFrom(json.decode(input)).cast<String, dynamic>();
     return fromJson(map);
   }
 
   @override
   String toString() {
-    // DateTime now = DateTime.now();
     return jsonEncode(toJson());
   }
 }

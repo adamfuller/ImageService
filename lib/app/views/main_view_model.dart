@@ -32,6 +32,12 @@ class MainViewModel {
     onDataChanged();
   }
 
+  void test() {
+    compute((v){
+
+    }, null);
+  }
+
   //
   // Private functions
   //

@@ -1,8 +1,7 @@
 part of database;
 
-class ImageService {
-  static const String _BASE_FOLDER = "/image_service/images/";
-
+class ImageClusterService{
+  static const String _BASE_FOLDER = "/image_service/image_clusters/";
   // static const String _DEFINITIONS_ID = "definitions";
   // static const String _DEFINITION_SEPARATOR = "#%";
 
@@ -17,71 +16,23 @@ class ImageService {
   //   return output;
   // }
 
-  static String _imageFolder(UserModel user) {
+  static String _imageClusterFolder(UserModel user){
     return _BASE_FOLDER + user.id;
   }
 
-  static Future<ImageModel> getImage(UserModel user, String id) {
-    return DatabaseService.getEntry(id, _imageFolder(user)).then<ImageModel>(
-        (v) {
-      // print("Input Image: " + v);
-      return ImageModel.fromString(v);
-    }, onError: (e) {
-      return null;
+  static Future<ImageClusterModel> getCluster(UserModel user, String id){
+    Completer<ImageClusterModel> output = Completer();
+    String folder =_imageClusterFolder(user);
+
+    DatabaseService.getEntry(id, folder).then((value) {
+      ImageClusterModel cluster = ImageClusterModel.fromString(value);
+      output.complete(cluster);
     });
+
+    return output.future;
   }
 
-  static Stream<ImageModel> getImageStream(UserModel user, {int start=0, int end=-1}) {
-    StreamController<ImageModel> output = StreamController<ImageModel>();
-    start = start >= 0 ? start : 0;
-    if (end < start){
-      end = user.imageIds.length;
-    }
-
-    Timer timeout = Timer(Duration(seconds: 15), () => output.close());
-    for (int index = start; index < min(end,user.imageIds.length); index++){
-      getImage(user, user.imageIds[index]).then((i) {
-        output.add(i);
-        timeout.cancel();
-        timeout = Timer(Duration(seconds: 15), () => output.close());
-      });
-    }
-    // user.imageIds.forEach((id) {
-    //   getImage(user, id).then((i) {
-    //     output.add(i);
-    //     timeout.cancel();
-    //     timeout = Timer(Duration(seconds: 15), () => output.close());
-    //   });
-    // });
-
-    return output.stream;
-  }
-
-  /// Gets all images linked to a user.
-  static Future<List<ImageModel>> getImages(UserModel user) {
-    return Future.wait(
-      user?.imageIds?.map<Future<ImageModel>>(
-        (id) => getImage(user, id),
-      ),
-    );
-  }
-
-  static Future<bool> saveImage(UserModel userModel, ImageModel image) {
-    return DatabaseService.setEntry(
-      image.id,
-      _imageFolder(userModel),
-      image.toString(),
-    ).then<bool>((v) {
-      userModel.imageIds.add(image.id);
-      userModel.imageCount++;
-      UserService.saveUser(userModel);
-      return true;
-    }, onError: (e) {
-      return false;
-    });
-  }
-
-  /// Get chores based on all chore definitions
+/// Get chores based on all chore definitions
 // static Future<List<ChoreModel>> _getCurrentChores() async {
 //   Completer<List<ChoreModel>> output = Completer();
 //   String folder = _choreModelsFolder();
@@ -149,14 +100,14 @@ class ImageService {
 //   return output.future;
 // }
 
-  /// Stores a chore for the current day.
+/// Stores a chore for the current day.
 // static Future<bool> storeChore(ChoreModel chore) async{
 //   String folder = _todayFolder();
 //   print("Storing Chore: ${chore.name}, $folder, ${chore.toString()}");
 //   return DatabaseService.setEntry(chore.id, folder, chore.toString());
 // }
 
-  /// Delete a chore for the current day.
+/// Delete a chore for the current day.
 // static Future<bool> deleteChore(ChoreModel chore) async{
 //   String folder = _todayFolder();
 //   print("Deleting Chore: ${chore.name}, $folder, ${chore.toString()}");
